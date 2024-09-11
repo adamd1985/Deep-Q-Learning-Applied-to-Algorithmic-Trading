@@ -121,8 +121,8 @@ class TradingEnv(gym.Env):
         # Interpolate in case of missing data
         self.data.replace(0.0, np.nan, inplace=True)
         self.data.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)
-        self.data.fillna(method='ffill', inplace=True)
-        self.data.fillna(method='bfill', inplace=True)
+        self.data.ffill(inplace=True)
+        self.data.ffill(inplace=True)
         self.data.fillna(0, inplace=True)
 
         # Set the trading activity dataframe
@@ -281,7 +281,7 @@ class TradingEnv(gym.Env):
 
         # CASE 3: PROHIBITED ACTION
         else:
-            raise SystemExit("Prohibited action! Action should be either 1 (long) or 0 (short).")
+            raise SystemExit(f"Prohibited action! Action should be either 1 (long) or 0 (short): {action}")
 
         # Update the total amount of money owned by the agent, as well as the return generated
         self.data['Money'][t] = self.data['Holdings'][t] + self.data['Cash'][t]

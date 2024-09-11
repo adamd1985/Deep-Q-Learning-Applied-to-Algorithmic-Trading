@@ -21,7 +21,7 @@ from tradingEnv import TradingEnv
 ################################ Global variables #############################
 ###############################################################################
 
-# Default ranges for the parameters of the data augmentation techniques 
+# Default ranges for the parameters of the data augmentation techniques
 shiftRange = [0]
 stretchRange = [1]
 filterRange = [5]
@@ -36,9 +36,9 @@ noiseRange = [0]
 class DataAugmentation:
     """
     GOAL: Implementing some data augmentation techniques for stock time series.
-    
+
     VARIABLES: /
-                                
+
     METHODS:    - __init__: Initialization of some class variables.
                 - shiftTimeSeries: Generate a new trading environment by simply
                                    shifting up or down the volume time series.
@@ -49,17 +49,17 @@ class DataAugmentation:
                 - lowPassFilter: Generate a new trading environment by filtering
                                  (low-pass) the original time series.
                 - generate: Generate a set of new trading environments based on the
-                            data augmentation techniques implemented.       
+                            data augmentation techniques implemented.
     """
-    
+
     def shiftTimeSeries(self, tradingEnv, shiftMagnitude=0):
         """
         GOAL: Generate a new trading environment by simply shifting up or down
               the volume time series.
-        
+
         INPUTS: - tradingEnv: Original trading environment to augment.
                 - shiftMagnitude: Magnitude of the shift.
-        
+
         OUTPUTS: - newTradingEnv: New trading environment generated.
         """
 
@@ -70,7 +70,7 @@ class DataAugmentation:
         if shiftMagnitude < 0:
             minValue = np.min(tradingEnv.data['Volume'])
             shiftMagnitude = max(-minValue, shiftMagnitude)
-        
+
         # Shifting of the volume time series
         newTradingEnv.data['Volume'] += shiftMagnitude
 
@@ -81,12 +81,12 @@ class DataAugmentation:
     def streching(self, tradingEnv, factor=1):
         """
         GOAL: Generate a new trading environment by stretching
-              or contracting the original price time series, by 
+              or contracting the original price time series, by
               multiplying the returns by a certain factor.
-        
+
         INPUTS: - tradingEnv: Original trading environment to augment.
                 - factor: Stretching/contraction factor.
-        
+
         OUTPUTS: - newTradingEnv: New trading environment generated.
         """
 
@@ -109,10 +109,10 @@ class DataAugmentation:
         """
         GOAL: Generate a new trading environment by adding some gaussian
               random noise to the original time series.
-        
+
         INPUTS: - tradingEnv: Original trading environment to augment.
                 - stdev: Standard deviation of the generated white noise.
-        
+
         OUTPUTS: - newTradingEnv: New trading environment generated.
         """
 
@@ -142,10 +142,10 @@ class DataAugmentation:
         """
         GOAL: Generate a new trading environment by filtering
               (low-pass filter) the original time series.
-        
+
         INPUTS: - tradingEnv: Original trading environment to augment.
                 - order: Order of the filtering operation.
-        
+
         OUTPUTS: - newTradingEnv: New trading environment generated.
         """
 
@@ -173,9 +173,9 @@ class DataAugmentation:
         """
         Generate a set of new trading environments based on the data
         augmentation techniques implemented.
-        
+
         :param: - tradingEnv: Original trading environment to augment.
-        
+
         :return: - tradingEnvList: List of trading environments generated
                                    by data augmentation techniques.
         """
@@ -191,4 +191,3 @@ class DataAugmentation:
                     for noise in noiseRange:
                         tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
         return tradingEnvList
-    
