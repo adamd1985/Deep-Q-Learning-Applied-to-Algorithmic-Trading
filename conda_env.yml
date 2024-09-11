@@ -1,0 +1,23 @@
+
+name: drl
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - seaborn
+  - statsmodels
+  - pandas-datareader
+  - requests
+  - tqdm
+  - tabulate
+  - pytorch
+  - gym
+  - tensorboard
+  - pip
+  - pip:
+    - torch>=2.0.0
+    - tensorboard

@@ -25,6 +25,19 @@ Check if installation was good: `nvidia-smi`
 Install TensorFlow's cuda framework: `pip install tensorflow[and-cuda]` and verify the installation: `python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"`
 
 
+##
+
+Environment
+
+Add these conda repos:
+```bash
+conda config --add channels pytorch && conda config --add channels conda-forge && conda config --add channels scikit-learn
+```
+
+Create an env from the JSON:
+```bash
+conda env create -f ./conda_env.yml
+```
 
 # Credits and Citations
 
