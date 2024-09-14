@@ -543,8 +543,12 @@ class YahooFinance:
     def __init__(self):
         self.data = pd.DataFrame()
     def getDailyData(self, marketSymbol, startingDate, endingDate):
-        data = pdr.data.DataReader(marketSymbol, 'yahoo', startingDate, endingDate)
-        self.data = self.processDataframe(data)
+        try:
+            data = pdr.data.DataReader(marketSymbol, 'yahoo', startingDate, endingDate)
+            self.data = self.processDataframe(data)
+        except Exception as e:
+            logging.error(f"Failed to download {marketSymbol}, from {startingDate} to {endingDate}", e)
+            self.data = pd.DataFrame()
         return self.data
     def processDataframe(self, dataframe):
         dataframe['Close'] = dataframe['Adj Close']
@@ -640,12 +644,12 @@ class TradingEnv(gym.Env):
                 self.data = csvConverter.CSVToDataframe(csvName)
             else:
                 downloader1 = YahooFinance()
-                downloader2 = AlphaVantage()
                 try:
                     self.data = downloader1.getDailyData(marketSymbol, startingDate, endingDate)
-                except:
-                    self.data = downloader2.getDailyData(marketSymbol, startingDate, endingDate)
+                except Exception as e:
+                    logging.error(f"Error in downloading data: {e}")
                 if saving == True:
+                    logging.info(f"Saving to CSV: {csvName}")
                     csvConverter.dataframeToCSV(csvName, self.data)
         self.data.replace(0.0, np.nan, inplace=True)
         self.data.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)

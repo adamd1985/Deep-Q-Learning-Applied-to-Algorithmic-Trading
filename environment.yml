@@ -254,4 +254,5 @@ dependencies:
       - wrapt==1.14.1
       - yarg==0.1.9
       - yfinance==0.2.38
+      - pandas_datareader==1.16.0
 prefix: /home/adamd1985/anaconda3/envs/quant
