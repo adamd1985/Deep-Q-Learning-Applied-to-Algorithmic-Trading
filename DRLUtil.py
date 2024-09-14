@@ -1765,7 +1765,7 @@ class TradingEnv(gym.Env):
     """
 
     def __init__(self, marketSymbol, startingDate, endingDate, money, stateLength=30,
-                 transactionCosts=0, startingPoint=0):
+                 transactionCosts=0, startingPoint=0, datadir='./data/'):
         """
         GOAL: Object constructor initializing the trading environment by setting up
               the trading activity dataframe as well as other important variables.
@@ -1798,7 +1798,7 @@ class TradingEnv(gym.Env):
         else:
             # Check if the stock market data is already present in the database
             csvConverter = CSVHandler()
-            csvName = "".join(['data/', marketSymbol, '_', startingDate, '_', endingDate])
+            csvName = "".join([datadir, marketSymbol, '_', startingDate, '_', endingDate])
             exists = os.path.isfile(csvName + '.csv')
 
             # If affirmative, load the stock market data from the database
@@ -2413,7 +2413,7 @@ class TradingSimulator:
                                  startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
                                  observationSpace=observationSpace, actionSpace=actionSpace,
                                  money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                                 rendering=True, showPerformance=True):
+                                 rendering=True, showPerformance=True, strategiesDir='./strategies/'):
         """
         GOAL: Simulate an already existing trading strategy on a certain
               stock of the testbench, the strategy being loaded from the
@@ -2481,7 +2481,7 @@ class TradingSimulator:
         # 2. LOADING PHASE
 
         # Check that the strategy to load exists in the strategy dataset
-        fileName = "".join(["Strategies/", strategy, "_", stock, "_", startingDate, "_", splitingDate])
+        fileName = "".join([strategiesDir, strategy, "_", stock, "_", startingDate, "_", splitingDate])
         exists = os.path.isfile(fileName)
         # If affirmative, load the trading strategy
         if exists:
