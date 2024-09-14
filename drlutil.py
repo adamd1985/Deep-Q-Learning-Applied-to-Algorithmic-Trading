@@ -628,7 +628,7 @@ class MovingAveragesTF(tradingStrategy):
         # Generate and show the 3D surface plot
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MATFOptimization3D', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization3D', '.png']))
         #plt.show()
 
         # Plot the same information as a 2D graph
@@ -641,7 +641,7 @@ class MovingAveragesTF(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MATFOptimization2D', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization2D', '.png']))
         #plt.show()
 
 
@@ -902,7 +902,7 @@ class MovingAveragesMR(tradingStrategy):
         # Generate and show the surface 3D surface plot
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MAMROptimization3D', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization3D', '.png']))
         #plt.show()
 
         # Plot the same information as a 2D graph
@@ -915,7 +915,7 @@ class MovingAveragesMR(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MAMROptimization2D', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization2D', '.png']))
         #plt.show()
 
 
@@ -2094,7 +2094,7 @@ class TradingEnv(gym.Env):
         # Generation of the two legends and plotting
         ax1.legend(["Price", "Long",  "Short"])
         ax2.legend(["Capital", "Long", "Short"])
-        plt.savefig(''.join(['Figures/', str(self.marketSymbol), '_Rendering', '.png']))
+        plt.savefig(''.join(['images/', str(self.marketSymbol), '_Rendering', '.png']))
         #plt.show()
 
 
@@ -2283,7 +2283,7 @@ class TradingSimulator:
         # Generation of the two legends and plotting
         ax1.legend(["Price", "Long",  "Short", "Train/Test separation"])
         ax2.legend(["Capital", "Long", "Short", "Train/Test separation"])
-        plt.savefig(''.join(['Figures/', str(trainingEnv.marketSymbol), '_TrainingTestingRendering', '.png']))
+        plt.savefig(''.join(['images/', str(trainingEnv.marketSymbol), '_TrainingTestingRendering', '.png']))
         #plt.show()
 
 
@@ -2413,7 +2413,7 @@ class TradingSimulator:
                                  startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
                                  observationSpace=observationSpace, actionSpace=actionSpace,
                                  money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                                 rendering=True, showPerformance=True, strategiesDir='./strategies/'):
+                                 rendering=True, showPerformance=True, strategiesDir='./strategies/', data_dir='./data/'):
         """
         GOAL: Simulate an already existing trading strategy on a certain
               stock of the testbench, the strategy being loaded from the
@@ -2498,8 +2498,8 @@ class TradingSimulator:
         # 3. TESTING PHASE
 
         # Initialize the trading environments associated with the testing phase
-        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
-        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts)
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts,data_dir=data_dir)
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts,data_dir=data_dir)
 
         # Testing of the trading strategy
         trainingEnv = tradingStrategy.testing(trainingEnv, trainingEnv, rendering=rendering, showPerformance=showPerformance)
@@ -2518,7 +2518,7 @@ class TradingSimulator:
                          money=money, stateLength=stateLength, transactionCosts=transactionCosts,
                          bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,
                          verbose=False, plotTraining=False, rendering=False, showPerformance=False,
-                         saveStrategy=False):
+                         saveStrategy=False, data_dir='./data/'):
         """
         GOAL: Evaluate the performance of a trading strategy on the entire
               testbench of stocks designed.
@@ -2560,10 +2560,10 @@ class TradingSimulator:
             # Simulation of the trading strategy on the current stock
             try:
                 # Simulate an already existing trading strategy on the current stock
-                _, _, testingEnv = self.simulateExistingStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, rendering, showPerformance)
+                _, _, testingEnv = self.simulateExistingStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, rendering, showPerformance, data_dir=data_dir)
             except SystemError:
                 # Simulate a new trading strategy on the current stock
-                _, _, testingEnv = self.simulateNewStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy)
+                _, _, testingEnv = self.simulateNewStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy, data_dir=data_dir)
 
             # Retrieve the trading performance associated with the trading strategy
             analyser = PerformanceEstimator(testingEnv.data)
@@ -3398,7 +3398,7 @@ class TDQN:
             ax.plot(performanceTrain)
             ax.plot(performanceTest)
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingPerformance', '.png']))
+            plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', '.png']))
             #plt.show()
             for i in range(len(trainingEnvList)):
                 self.plotTraining(score[i][:episode], marketSymbol)
@@ -3485,7 +3485,7 @@ class TDQN:
         fig = plt.figure()
         ax1 = fig.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
         ax1.plot(score)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), 'TrainingResults', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), 'TrainingResults', '.png']))
         #plt.show()
 
 
@@ -3505,7 +3505,7 @@ class TDQN:
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_QValues', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_QValues', '.png']))
         #plt.show()
 
 
@@ -3652,7 +3652,7 @@ class TDQN:
             ax.plot([performanceTrain[e][i] for e in range(trainingParameters[0])])
             ax.plot([performanceTest[e][i] for e in range(trainingParameters[0])])
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingPerformance', str(i+1), '.png']))
+            plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', str(i+1), '.png']))
             #plt.show()
 
         # Plot the expected performance of the intelligent DRL trading agent
@@ -3663,7 +3663,7 @@ class TDQN:
         ax.fill_between(range(len(expectedPerformanceTrain)), expectedPerformanceTrain-stdPerformanceTrain, expectedPerformanceTrain+stdPerformanceTrain, alpha=0.25)
         ax.fill_between(range(len(expectedPerformanceTest)), expectedPerformanceTest-stdPerformanceTest, expectedPerformanceTest+stdPerformanceTest, alpha=0.25)
         ax.legend(["Training", "Testing"])
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingExpectedPerformance', '.png']))
+        plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingExpectedPerformance', '.png']))
         #plt.show()
 
         # Closing of the tensorboard writer
@@ -3711,7 +3711,7 @@ class TDQN:
         plt.plot([self.epsilonValue(i) for i in range(10*epsilonDecay)])
         plt.xlabel("Iterations")
         plt.ylabel("Epsilon value")
-        plt.savefig(''.join(['Figures/', 'EpsilonAnnealing', '.png']))
+        plt.savefig(''.join(['images/', 'EpsilonAnnealing', '.png']))
         #plt.show()
 
 
@@ -3908,7 +3908,7 @@ class PerformanceEstimator:
                      [capital[peak], capital[through]], 'o', color='Red', markersize=5)
             plt.xlabel('Time')
             plt.ylabel('Price')
-            plt.savefig(''.join(['Figures/', 'MaximumDrawDown', '.png']))
+            plt.savefig(''.join(['images/', 'MaximumDrawDown', '.png']))
             #plt.show()
 
         # Return of the results
