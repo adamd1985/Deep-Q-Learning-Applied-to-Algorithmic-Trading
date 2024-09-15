@@ -63,18 +63,6 @@ rewardClipping = 1
 L2Factor = 0.000001
 GPUNumber = 0
 
-startingDate = '2012-1-1'
-endingDate = '2020-1-1'
-splitingDate = '2018-1-1'
-stateLength = 30
-observationSpace = 1 + (stateLength-1)*4
-actionSpace = 2
-percentageCosts = [0, 0.1, 0.2]
-transactionCosts = percentageCosts[1]/100
-money = 100000
-bounds = [1, 30]
-step = 1
-numberOfEpisodes = 50
 fictives = {
     'Linear Upward' : 'LINEARUP',
     'Linear Downward' : 'LINEARDOWN',
@@ -156,7 +144,11 @@ models = {
 strategiesAI = {
     'TDQN' : 'TDQN'
 }
-
+MIN = 100
+MAX = 200
+PERIOD = 252
+saving = False
+fictiveStocks = ('LINEARUP', 'LINEARDOWN', 'SINUSOIDAL', 'TRIANGLE')
 
 class tradingStrategy(ABC):
     @abstractmethod
@@ -564,9 +556,7 @@ class CSVHandler:
                            index_col='Date',
                            parse_dates=True)
 
-MIN = 100
-MAX = 200
-PERIOD = 252
+
 class StockGenerator:
     def linearUp (self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
         downloader = YahooFinance()
@@ -619,11 +609,11 @@ class StockGenerator:
         triangle['Close'] = prices
         triangle['Volume'] = 100000
         return triangle
-saving = True
-fictiveStocks = ('LINEARUP', 'LINEARDOWN', 'SINUSOIDAL', 'TRIANGLE')
+
 class TradingEnv(gym.Env):
     def __init__(self, marketSymbol, startingDate, endingDate, money, stateLength=30,
-                 transactionCosts=0, startingPoint=0, data_dir='./data/'):
+                 transactionCosts=0, startingPoint=0, data_dir='./data/', features=['High', 'Low', 'Open', 'Close']):
+        self.features = features
         if(marketSymbol in fictiveStocks):
             stockGeneration = StockGenerator()
             if(marketSymbol == 'LINEARUP'):
@@ -660,11 +650,7 @@ class TradingEnv(gym.Env):
         self.data['Cash'] = float(money)
         self.data['Money'] = self.data['Holdings'] + self.data['Cash']
         self.data['Returns'] = 0.
-        self.state = [self.data['Close'][0:stateLength].tolist(),
-                      self.data['Low'][0:stateLength].tolist(),
-                      self.data['High'][0:stateLength].tolist(),
-                      self.data['Volume'][0:stateLength].tolist(),
-                      [0]]
+        self.state = [self.data[feature][0:stateLength].tolist() for feature in self.features] + [[0]]
         self.reward = 0.
         self.done = 0
         self.marketSymbol = marketSymbol
@@ -677,6 +663,7 @@ class TradingEnv(gym.Env):
         self.epsilon = 0.1
         if startingPoint:
             self.setStartingPoint(startingPoint)
+
     def reset(self):
         self.data['Position'] = 0
         self.data['Action'] = 0
@@ -684,16 +671,13 @@ class TradingEnv(gym.Env):
         self.data['Cash'] = self.data['Cash'][0]
         self.data['Money'] = self.data['Holdings'] + self.data['Cash']
         self.data['Returns'] = 0.
-        self.state = [self.data['Close'][0:self.stateLength].tolist(),
-                      self.data['Low'][0:self.stateLength].tolist(),
-                      self.data['High'][0:self.stateLength].tolist(),
-                      self.data['Volume'][0:self.stateLength].tolist(),
-                      [0]]
+        self.state = [self.data[feature][0:self.stateLength].tolist() for feature in self.features] + [[0]]
         self.reward = 0.
         self.done = 0
         self.t = self.stateLength
         self.numberOfShares = 0
         return self.state
+
     def computeLowerBound(self, cash, numberOfShares, price):
         deltaValues = - cash - numberOfShares * price * (1 + self.epsilon) * (1 + self.transactionCosts)
         if deltaValues < 0:
@@ -701,6 +685,7 @@ class TradingEnv(gym.Env):
         else:
             lowerBound = deltaValues / (price * self.epsilon * (1 + self.transactionCosts))
         return lowerBound
+
     def step(self, action):
         t = self.t
         numberOfShares = self.numberOfShares
@@ -754,11 +739,7 @@ class TradingEnv(gym.Env):
         else:
             self.reward = (self.data['Close'][t-1] - self.data['Close'][t])/self.data['Close'][t-1]
         self.t = self.t + 1
-        self.state = [self.data['Close'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Low'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['High'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Volume'][self.t - self.stateLength : self.t].tolist(),
-                      [self.data['Position'][self.t - 1]]]
+        self.state = [self.data[feature][self.t - self.stateLength : self.t].tolist() for feature in self.features] + [[self.data['Position'][self.t - 1]]]
         if(self.t == self.data.shape[0]):
             self.done = 1
         otherAction = int(not bool(action))
@@ -804,13 +785,10 @@ class TradingEnv(gym.Env):
             otherReward = (otherMoney - self.data['Money'][t-1])/self.data['Money'][t-1]
         else:
             otherReward = (self.data['Close'][t-1] - self.data['Close'][t])/self.data['Close'][t-1]
-        otherState = [self.data['Close'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Low'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['High'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Volume'][self.t - self.stateLength : self.t].tolist(),
-                      [otherPosition]]
+        otherState = [self.data[feature][self.t - self.stateLength : self.t].tolist() for feature in self.features] + [[otherPosition]]
         self.info = {'State' : otherState, 'Reward' : otherReward, 'Done' : self.done}
         return self.state, self.reward, self.done, self.info
+
     def render(self):
         fig = plt.figure(figsize=(10, 8))
         ax1 = fig.add_subplot(211, ylabel='Price', xlabel='Time')
@@ -832,24 +810,23 @@ class TradingEnv(gym.Env):
         ax1.legend(["Price", "Long",  "Short"])
         ax2.legend(["Capital", "Long", "Short"])
         plt.savefig(''.join(['images/', str(self.marketSymbol), '_Rendering', '.png']))
+
     def setStartingPoint(self, startingPoint):
         self.t = np.clip(startingPoint, self.stateLength, len(self.data.index))
-        self.state = [self.data['Close'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Low'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['High'][self.t - self.stateLength : self.t].tolist(),
-                      self.data['Volume'][self.t - self.stateLength : self.t].tolist(),
-                      [self.data['Position'][self.t - 1]]]
+        self.state = [self.data[feature][self.t - self.stateLength : self.t].tolist() for feature in self.features] + [[self.data['Position'][self.t - 1]]]
         if(self.t == self.data.shape[0]):
             self.done = 1
+
 class TradingSimulator:
-    def displayTestbench(self, startingDate=startingDate, endingDate=endingDate):
+    def displayTestbench(self, startingDate, endingDate, features=['High', 'Low', 'Open', 'Close']):
         for _, stock in indices.items():
-            env = TradingEnv(stock, startingDate, endingDate, 0)
+            env = TradingEnv(stock, startingDate, endingDate, 0, features=features)
             env.render()
         for _, stock in companies.items():
-            env = TradingEnv(stock, startingDate, endingDate, 0)
+            env = TradingEnv(stock, startingDate, endingDate, 0, features=features)
             env.render()
-    def analyseTimeSeries(self, stockName, startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate):
+
+    def analyseTimeSeries(self, stockName, startingDate, endingDate, splitingDate, features=['High', 'Low', 'Open', 'Close']):
         if(stockName in fictives):
             stock = fictives[stockName]
         elif(stockName in indices):
@@ -865,31 +842,35 @@ class TradingSimulator:
             for stock in companies:
                 logging.info("".join(['- ', stock]))
             raise SystemError("Please check the stock specified.")
+
         logging.info("\n\n\nAnalysis of the TRAINING phase time series")
         logging.info("------------------------------------------\n")
-        trainingEnv = TradingEnv(stock, startingDate, splitingDate, 0)
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, 0, features=features)
         timeSeries = trainingEnv.data['Close']
         analyser = TimeSeriesAnalyser(timeSeries)
         analyser.timeSeriesDecomposition()
         analyser.stationarityAnalysis()
         analyser.cyclicityAnalysis()
+
         logging.info("\n\n\nAnalysis of the TESTING phase time series")
         logging.info("------------------------------------------\n")
-        testingEnv = TradingEnv(stock, splitingDate, endingDate, 0)
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, 0, features=features)
         timeSeries = testingEnv.data['Close']
         analyser = TimeSeriesAnalyser(timeSeries)
         analyser.timeSeriesDecomposition()
         analyser.stationarityAnalysis()
         analyser.cyclicityAnalysis()
+
         logging.info("\n\n\nAnalysis of the entire time series (both training and testing phases)")
         logging.info("---------------------------------------------------------------------\n")
-        tradingEnv = TradingEnv(stock, startingDate, endingDate, 0)
+        tradingEnv = TradingEnv(stock, startingDate, endingDate, 0, features=features)
         timeSeries = tradingEnv.data['Close']
         analyser = TimeSeriesAnalyser(timeSeries)
         analyser.timeSeriesDecomposition()
         analyser.stationarityAnalysis()
         analyser.cyclicityAnalysis()
-    def plotEntireTrading(self, trainingEnv, testingEnv):
+
+    def plotEntireTrading(self, trainingEnv, testingEnv, splitingDate):
         ratio = trainingEnv.data['Money'][-1]/testingEnv.data['Money'][0]
         testingEnv.data['Money'] = ratio * testingEnv.data['Money']
         dataframes = [trainingEnv.data, testingEnv.data]
@@ -918,13 +899,17 @@ class TradingSimulator:
         ax1.legend(["Price", "Long",  "Short", "Train/Test separation"])
         ax2.legend(["Capital", "Long", "Short", "Train/Test separation"])
         plt.savefig(''.join(['images/', str(trainingEnv.marketSymbol), '_TrainingTestingRendering', '.png']))
+
     def simulateNewStrategy(self, strategyName, stockName,
-                            startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
-                            observationSpace=observationSpace, actionSpace=actionSpace,
-                            money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                            bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,
+                            startingDate, endingDate, splitingDate,
+                            observationSpace, actionSpace,
+                            money, stateLength, transactionCosts,
+                            bounds, step, numberOfEpisodes,
                             verbose=True, plotTraining=True, rendering=True, showPerformance=True,
-                            saveStrategy=False, data_dir='./data/', strategies_dir='./models/'):
+                            saveStrategy=False,
+                            data_dir='./data/',
+                            strategies_dir='./models/',
+                            features=['High', 'Low', 'Open', 'Close']):
         if(strategyName in models):
             strategy = models[strategyName]
             trainingParameters = [bounds, step]
@@ -940,6 +925,7 @@ class TradingSimulator:
             for strategy in strategiesAI:
                 logging.info("".join(['- ', strategy]))
             raise SystemError("Please check the trading strategy specified.")
+
         if(stockName in fictives):
             stock = fictives[stockName]
         elif(stockName in indices):
@@ -955,7 +941,8 @@ class TradingSimulator:
             for stock in companies:
                 logging.info("".join(['- ', stock]))
             raise SystemError("Please check the stock specified.")
-        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts, data_dir=data_dir)
+
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts, data_dir=data_dir, features=features)
         if ai:
             tradingStrategy = TDQN(observationSpace, actionSpace)
         else:
@@ -969,11 +956,13 @@ class TradingSimulator:
                 tradingStrategy = MovingAveragesMR()
             else:
                 raise SystemError(strategyName)
+
         trainingEnv = tradingStrategy.training(trainingEnv, trainingParameters=trainingParameters,
                                                verbose=verbose, rendering=rendering,
-                                               plotTraining=plotTraining, showPerformance=showPerformance)
-        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts)
-        testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance)
+                                               plotTraining=plotTraining, showPerformance=showPerformance,
+                                               features=features)
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, features=features)
+        testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance, features=features)
         if rendering:
             self.plotEntireTrading(trainingEnv, testingEnv)
         if(saveStrategy):
@@ -984,11 +973,12 @@ class TradingSimulator:
                 fileHandler = open(fileName, 'wb')
                 pickle.dump(tradingStrategy, fileHandler)
         return tradingStrategy, trainingEnv, testingEnv
+
     def simulateExistingStrategy(self, strategyName, stockName,
-                                 startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
-                                 observationSpace=observationSpace, actionSpace=actionSpace,
-                                 money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                                 rendering=True, showPerformance=True, strategiesDir='./models/', data_dir='./data/'):
+                                 startingDate, endingDate, splitingDate,
+                                 observationSpace, actionSpace,
+                                 money, stateLength, transactionCosts,
+                                 rendering=True, showPerformance=True, strategiesDir='./models/', data_dir='./data/', features=['High', 'Low', 'Open', 'Close']):
         if(strategyName in models):
             strategy = models[strategyName]
             ai = False
@@ -1002,6 +992,7 @@ class TradingSimulator:
             for strategy in strategiesAI:
                 logging.info("".join(['- ', strategy]))
             raise SystemError("Please check the trading strategy specified.")
+
         if(stockName in fictives):
             stock = fictives[stockName]
         elif(stockName in indices):
@@ -1017,6 +1008,7 @@ class TradingSimulator:
             for stock in companies:
                 logging.info("".join(['- ', stock]))
             raise SystemError("Please check the stock specified.")
+
         fileName = "".join([strategiesDir, strategy, "_", stock, "_", startingDate, "_", splitingDate])
         exists = os.path.isfile(fileName)
         if exists:
@@ -1028,61 +1020,15 @@ class TradingSimulator:
                 tradingStrategy = pickle.load(fileHandler)
         else:
             raise SystemError("The trading strategy specified does not exist, please provide a valid one.")
-        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts,data_dir=data_dir)
-        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts,data_dir=data_dir)
+
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts, data_dir=data_dir, features=features)
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, data_dir=data_dir, features=features)
         trainingEnv = tradingStrategy.testing(trainingEnv, trainingEnv, rendering=rendering, showPerformance=showPerformance)
         testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance)
         if rendering:
             self.plotEntireTrading(trainingEnv, testingEnv)
         return tradingStrategy, trainingEnv, testingEnv
-    def evaluateStrategy(self, strategyName,
-                         startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
-                         observationSpace=observationSpace, actionSpace=actionSpace,
-                         money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                         bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,
-                         verbose=False, plotTraining=False, rendering=False, showPerformance=False,
-                         saveStrategy=False, data_dir='./data/'):
-        performanceTable = [["Profit & Loss (P&L)"], ["Annualized Return"], ["Annualized Volatility"], ["Sharpe Ratio"], ["Sortino Ratio"], ["Maximum DrawDown"], ["Maximum DrawDown Duration"], ["Profitability"], ["Ratio Average Profit/Loss"], ["Skewness"]]
-        headers = ["Performance Indicator"]
-        logging.info("Trading strategy evaluation progression:")
-        for stock in tqdm(stocks):
-            try:
-                _, _, testingEnv = self.simulateExistingStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, rendering, showPerformance, data_dir=data_dir)
-            except SystemError:
-                _, _, testingEnv = self.simulateNewStrategy(strategyName, stock, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy, data_dir=data_dir)
-            analyser = PerformanceEstimator(testingEnv.data)
-            performance = analyser.computePerformance()
-            headers.append(stock)
-            for i in range(len(performanceTable)):
-                performanceTable[i].append(performance[i][1])
-        tabulation = tabulate(performanceTable, headers, tablefmt="fancy_grid", stralign="center")
-        logging.info('\n' + tabulation)
-        sharpeRatio = np.mean([float(item) for item in performanceTable[3][1:]])
-        logging.info("Average Sharpe Ratio: " + "{0:.3f}".format(sharpeRatio))
-        return performanceTable
-    def evaluateStock(self, stockName,
-                      startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
-                      observationSpace=observationSpace, actionSpace=actionSpace,
-                      money=money, stateLength=stateLength, transactionCosts=transactionCosts,
-                      bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,
-                      verbose=False, plotTraining=False, rendering=False, showPerformance=False,
-                      saveStrategy=False):
-        performanceTable = [["Profit & Loss (P&L)"], ["Annualized Return"], ["Annualized Volatility"], ["Sharpe Ratio"], ["Sortino Ratio"], ["Maximum DrawDown"], ["Maximum DrawDown Duration"], ["Profitability"], ["Ratio Average Profit/Loss"], ["Skewness"]]
-        headers = ["Performance Indicator"]
-        logging.info("Trading models evaluation progression:")
-        for strategy in tqdm(itertools.chain(models, strategiesAI)):
-            try:
-                _, _, testingEnv = self.simulateExistingStrategy(strategy, stockName, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, rendering, showPerformance)
-            except SystemError:
-                _, _, testingEnv = self.simulateNewStrategy(strategy, stockName, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy=saveStrategy)
-            analyser = PerformanceEstimator(testingEnv.data)
-            performance = analyser.computePerformance()
-            headers.append(strategy)
-            for i in range(len(performanceTable)):
-                performanceTable[i].append(performance[i][1])
-        tabulation = tabulate(performanceTable, headers, tablefmt="fancy_grid", stralign="center")
-        logging.info('\n' + tabulation)
-        return performanceTable
+
 
 class ReplayMemory:
     def __init__(self, capacity=capacity):
@@ -1096,6 +1042,7 @@ class ReplayMemory:
         return len(self.memory)
     def reset(self):
         self.memory = deque(maxlen=capacity)
+
 class DQN(nn.Module):
     def __init__(self, numberOfInputs, numberOfOutputs, numberOfNeurons=numberOfNeurons, dropout=dropout):
         super(DQN, self).__init__()
@@ -1124,6 +1071,7 @@ class DQN(nn.Module):
         x = self.dropout4(F.leaky_relu(self.bn4(self.fc4(x))))
         output = self.fc5(x)
         return output
+
 class TDQN:
     def __init__(self, observationSpace, actionSpace, numberOfNeurons=numberOfNeurons, dropout=dropout,
                  gamma=gamma, learningRate=learningRate, targetNetworkUpdate=targetNetworkUpdate,
@@ -1233,6 +1181,7 @@ class TDQN:
         if (len(self.replayMemory) >= batchSize):
             self.policyNetwork.train()
             state, action, reward, nextState, done = self.replayMemory.sample(batchSize)
+
             state = torch.tensor(state, dtype=torch.float, device=self.device)
             action = torch.tensor(action, dtype=torch.long, device=self.device)
             reward = torch.tensor(reward, dtype=torch.float, device=self.device)
@@ -1251,7 +1200,7 @@ class TDQN:
             self.updateTargetNetwork()
             self.policyNetwork.eval()
     def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+                 verbose=False, rendering=False, plotTraining=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
         if plotTraining:
@@ -1263,7 +1212,7 @@ class TDQN:
             money = trainingEnv.data['Money'][0]
             stateLength = trainingEnv.stateLength
             transactionCosts = trainingEnv.transactionCosts
-            testingEnv = TradingEnv(marketSymbol, startingDate, endingDate, money, stateLength, transactionCosts)
+            testingEnv = TradingEnv(marketSymbol, startingDate, endingDate, money, stateLength, transactionCosts, features=features)
             performanceTest = []
         try:
             if verbose:
@@ -1336,7 +1285,7 @@ class TDQN:
             analyser.displayPerformance('TDQN')
         self.writer.close()
         return trainingEnv
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         testingEnvSmoothed = dataAugmentation.lowPassFilter(testingEnv, filterOrder)
         trainingEnv = dataAugmentation.lowPassFilter(trainingEnv, filterOrder)
@@ -1372,7 +1321,7 @@ class TDQN:
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
         plt.savefig(''.join(['images/', str(marketSymbol), '_QValues', '.png']))
-    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10):
+    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
         initialWeights =  copy.deepcopy(self.policyNetwork.state_dict())
@@ -1384,7 +1333,7 @@ class TDQN:
         money = trainingEnv.data['Money'][0]
         stateLength = trainingEnv.stateLength
         transactionCosts = trainingEnv.transactionCosts
-        testingEnv = TradingEnv(marketSymbol, startingDate, endingDate, money, stateLength, transactionCosts)
+        testingEnv = TradingEnv(marketSymbol, startingDate, endingDate, money, stateLength, transactionCosts, features=features)
         logging.info("Hardware selected for training: " + str(self.device))
         try:
             for iteration in range(iterations):
@@ -1483,6 +1432,7 @@ class TDQN:
         plt.xlabel("Iterations")
         plt.ylabel("Epsilon value")
         plt.savefig(''.join(['images/', 'EpsilonAnnealing', '.png']))
+
 class PerformanceEstimator:
     def __init__(self, tradingData):
         self.data = tradingData
