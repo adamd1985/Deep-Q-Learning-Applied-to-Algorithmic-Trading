@@ -74,7 +74,7 @@ transactionCosts = percentageCosts[1]/100
 money = 100000
 bounds = [1, 30]
 step = 1
-numberOfEpisodes = 1
+numberOfEpisodes = 50
 fictives = {
     'Linear Upward' : 'LINEARUP',
     'Linear Downward' : 'LINEARDOWN',
