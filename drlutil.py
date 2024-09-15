@@ -8,6 +8,9 @@ import pickle
 import itertools
 import numpy as np
 import pandas as pd
+
+import yfinance as yf
+
 from tabulate import tabulate
 from tqdm import tqdm
 from matplotlib import pyplot as plt
@@ -24,6 +27,137 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import math
 from mpl_toolkits.mplot3d import Axes3D
 from abc import ABC, abstractmethod
+import gym
+pd.options.mode.chained_assignment = None
+from scipy import signal
+import pandas_datareader as pdr
+import requests
+from io import StringIO
+
+import random
+import datetime
+from collections import deque
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.autograd as autograd
+import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
+
+gamma = 0.4
+learningRate = 0.0001
+targetNetworkUpdate = 1000
+learningUpdatePeriod = 1
+capacity = 100000
+batchSize = 32
+experiencesRequired = 1000
+numberOfNeurons = 512
+dropout = 0.2
+epsilonStart = 1.0
+epsilonEnd = 0.01
+epsilonDecay = 10000
+alpha = 0.1
+filterOrder = 5
+gradientClipping = 1
+rewardClipping = 1
+L2Factor = 0.000001
+GPUNumber = 0
+
+startingDate = '2012-1-1'
+endingDate = '2020-1-1'
+splitingDate = '2018-1-1'
+stateLength = 30
+observationSpace = 1 + (stateLength-1)*4
+actionSpace = 2
+percentageCosts = [0, 0.1, 0.2]
+transactionCosts = percentageCosts[1]/100
+money = 100000
+bounds = [1, 30]
+step = 1
+numberOfEpisodes = 1
+fictives = {
+    'Linear Upward' : 'LINEARUP',
+    'Linear Downward' : 'LINEARDOWN',
+    'Sinusoidal' : 'SINUSOIDAL',
+    'Triangle' : 'TRIANGLE',
+}
+stocks = {
+    'Dow Jones' : 'DIA',
+    'S&P 500' : 'SPY',
+    'NASDAQ 100' : 'QQQ',
+    'FTSE 100' : 'EZU',
+    'Nikkei 225' : 'EWJ',
+    'Google' : 'GOOGL',
+    'Apple' : 'AAPL',
+    'Facebook' : 'FB',
+    'Amazon' : 'AMZN',
+    'Microsoft' : 'MSFT',
+    'Twitter' : 'TWTR',
+    'Nokia' : 'NOK',
+    'Philips' : 'PHIA.AS',
+    'Siemens' : 'SIE.DE',
+    'Baidu' : 'BIDU',
+    'Alibaba' : 'BABA',
+    'Tencent' : '0700.HK',
+    'Sony' : '6758.T',
+    'JPMorgan Chase' : 'JPM',
+    'HSBC' : 'HSBC',
+    'CCB' : '0939.HK',
+    'ExxonMobil' : 'XOM',
+    'Shell' : 'RDSA.AS',
+    'PetroChina' : 'PTR',
+    'Tesla' : 'TSLA',
+    'Volkswagen' : 'VOW3.DE',
+    'Toyota' : '7203.T',
+    'Coca Cola' : 'KO',
+    'AB InBev' : 'ABI.BR',
+    'Kirin' : '2503.T'
+}
+indices = {
+    'Dow Jones' : 'DIA',
+    'S&P 500' : 'SPY',
+    'NASDAQ 100' : 'QQQ',
+    'FTSE 100' : 'EZU',
+    'Nikkei 225' : 'EWJ'
+}
+companies = {
+    'Google' : 'GOOGL',
+    'Apple' : 'AAPL',
+    'Facebook' : 'FB',
+    'Amazon' : 'AMZN',
+    'Microsoft' : 'MSFT',
+    'Twitter' : 'TWTR',
+    'Nokia' : 'NOK',
+    'Philips' : 'PHIA.AS',
+    'Siemens' : 'SIE.DE',
+    'Baidu' : 'BIDU',
+    'Alibaba' : 'BABA',
+    'Tencent' : '0700.HK',
+    'Sony' : '6758.T',
+    'JPMorgan Chase' : 'JPM',
+    'HSBC' : 'HSBC',
+    'CCB' : '0939.HK',
+    'ExxonMobil' : 'XOM',
+    'Shell' : 'RDSA.AS',
+    'PetroChina' : 'PTR',
+    'Tesla' : 'TSLA',
+    'Volkswagen' : 'VOW3.DE',
+    'Toyota' : '7203.T',
+    'Coca Cola' : 'KO',
+    'AB InBev' : 'ABI.BR',
+    'Kirin' : '2503.T'
+}
+models = {
+    'Buy and Hold' : 'BuyAndHold',
+    'Sell and Hold' : 'SellAndHold',
+    'Trend Following Moving Averages' : 'MovingAveragesTF',
+    'Mean Reversion Moving Averages' : 'MovingAveragesMR'
+}
+strategiesAI = {
+    'TDQN' : 'TDQN'
+}
+
+
 class tradingStrategy(ABC):
     @abstractmethod
     def chooseAction(self, state):
@@ -395,177 +529,41 @@ class DataAugmentation:
                     for noise in noiseRange:
                         tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
         return tradingEnvList
-startingDate = '2012-1-1'
-endingDate = '2020-1-1'
-splitingDate = '2018-1-1'
-stateLength = 30
-observationSpace = 1 + (stateLength-1)*4
-actionSpace = 2
-percentageCosts = [0, 0.1, 0.2]
-transactionCosts = percentageCosts[1]/100
-money = 100000
-bounds = [1, 30]
-step = 1
-numberOfEpisodes = 1
-fictives = {
-    'Linear Upward' : 'LINEARUP',
-    'Linear Downward' : 'LINEARDOWN',
-    'Sinusoidal' : 'SINUSOIDAL',
-    'Triangle' : 'TRIANGLE',
-}
-stocks = {
-    'Dow Jones' : 'DIA',
-    'S&P 500' : 'SPY',
-    'NASDAQ 100' : 'QQQ',
-    'FTSE 100' : 'EZU',
-    'Nikkei 225' : 'EWJ',
-    'Google' : 'GOOGL',
-    'Apple' : 'AAPL',
-    'Facebook' : 'FB',
-    'Amazon' : 'AMZN',
-    'Microsoft' : 'MSFT',
-    'Twitter' : 'TWTR',
-    'Nokia' : 'NOK',
-    'Philips' : 'PHIA.AS',
-    'Siemens' : 'SIE.DE',
-    'Baidu' : 'BIDU',
-    'Alibaba' : 'BABA',
-    'Tencent' : '0700.HK',
-    'Sony' : '6758.T',
-    'JPMorgan Chase' : 'JPM',
-    'HSBC' : 'HSBC',
-    'CCB' : '0939.HK',
-    'ExxonMobil' : 'XOM',
-    'Shell' : 'RDSA.AS',
-    'PetroChina' : 'PTR',
-    'Tesla' : 'TSLA',
-    'Volkswagen' : 'VOW3.DE',
-    'Toyota' : '7203.T',
-    'Coca Cola' : 'KO',
-    'AB InBev' : 'ABI.BR',
-    'Kirin' : '2503.T'
-}
-indices = {
-    'Dow Jones' : 'DIA',
-    'S&P 500' : 'SPY',
-    'NASDAQ 100' : 'QQQ',
-    'FTSE 100' : 'EZU',
-    'Nikkei 225' : 'EWJ'
-}
-companies = {
-    'Google' : 'GOOGL',
-    'Apple' : 'AAPL',
-    'Facebook' : 'FB',
-    'Amazon' : 'AMZN',
-    'Microsoft' : 'MSFT',
-    'Twitter' : 'TWTR',
-    'Nokia' : 'NOK',
-    'Philips' : 'PHIA.AS',
-    'Siemens' : 'SIE.DE',
-    'Baidu' : 'BIDU',
-    'Alibaba' : 'BABA',
-    'Tencent' : '0700.HK',
-    'Sony' : '6758.T',
-    'JPMorgan Chase' : 'JPM',
-    'HSBC' : 'HSBC',
-    'CCB' : '0939.HK',
-    'ExxonMobil' : 'XOM',
-    'Shell' : 'RDSA.AS',
-    'PetroChina' : 'PTR',
-    'Tesla' : 'TSLA',
-    'Volkswagen' : 'VOW3.DE',
-    'Toyota' : '7203.T',
-    'Coca Cola' : 'KO',
-    'AB InBev' : 'ABI.BR',
-    'Kirin' : '2503.T'
-}
-models = {
-    'Buy and Hold' : 'BuyAndHold',
-    'Sell and Hold' : 'SellAndHold',
-    'Trend Following Moving Averages' : 'MovingAveragesTF',
-    'Mean Reversion Moving Averages' : 'MovingAveragesMR'
-}
-strategiesAI = {
-    'TDQN' : 'TDQN'
-}
-import gym
-pd.options.mode.chained_assignment = None
-from scipy import signal
-import pandas_datareader as pdr
-import requests
-from io import StringIO
-class AlphaVantage:
-    def __init__(self):
-        self.link = 'https://www.alphavantage.co/query'
-        self.apikey = 'APIKEY'
-        self.datatype = 'csv'
-        self.outputsize = 'full'
-        self.data = pd.DataFrame()
-    def getDailyData(self, marketSymbol, startingDate, endingDate):
-        payload = {'function': 'TIME_SERIES_DAILY_ADJUSTED', 'symbol': marketSymbol,
-                   'outputsize': self.outputsize, 'datatype': self.datatype,
-                   'apikey': self.apikey}
-        response = requests.get(self.link, params=payload)
-        csvText = StringIO(response.text)
-        data = pd.read_csv(csvText, index_col='Date')
-        self.data = self.processDataframe(data)
-        if(startingDate != 0 and endingDate != 0):
-            self.data = self.data.loc[startingDate:endingDate]
-        return self.data
-    def getIntradayData(self, marketSymbol, startingDate, endingDate, timePeriod=60):
-        possiblePeriods = [1, 5, 15, 30, 60]
-        timePeriod = min(possiblePeriods, key=lambda x:abs(x-timePeriod))
-        payload = {'function': 'TIME_SERIES_INTRADAY', 'symbol': marketSymbol,
-                   'outputsize': self.outputsize, 'datatype': self.datatype,
-                   'apikey': self.apikey, 'interval': str(timePeriod)+'min'}
-        response = requests.get(self.link, params=payload)
-        csvText = StringIO(response.text)
-        data = pd.read_csv(csvText, index_col='Date')
-        self.data = self.processDataframe(data)
-        if(startingDate != 0 and endingDate != 0):
-            self.data = self.data.loc[startingDate:endingDate]
-        return self.data
-    def processDataframe(self, dataframe):
-        dataframe = dataframe[::-1]
-        dataframe['close'] = dataframe['adjusted_close']
-        del dataframe['adjusted_close']
-        del dataframe['dividend_amount']
-        del dataframe['split_coefficient']
-        dataframe.index.names = ['Date']
-        dataframe = dataframe.rename(index=str, columns={"open": "Open",
-                                                         "high": "High",
-                                                         "low": "Low",
-                                                         "close": "Close",
-                                                         "volume": "Volume"})
-        dataframe.index = dataframe.index.map(pd.to_datetime)
-        return dataframe
+
+
 class YahooFinance:
     def __init__(self):
         self.data = pd.DataFrame()
+
     def getDailyData(self, marketSymbol, startingDate, endingDate):
         try:
-            data = pdr.data.DataReader(marketSymbol, 'yahoo', startingDate, endingDate)
+            ticker = yf.Ticker(marketSymbol)
+            data = ticker.history(start=startingDate, end=endingDate)
             self.data = self.processDataframe(data)
         except Exception as e:
-            logging.error(f"Failed to download {marketSymbol}, from {startingDate} to {endingDate}", e)
+            logging.error(f"Failed to download {marketSymbol}, from {startingDate} to {endingDate}: {e}")
             self.data = pd.DataFrame()
         return self.data
+
     def processDataframe(self, dataframe):
-        dataframe['Close'] = dataframe['Adj Close']
-        del dataframe['Adj Close']
-        dataframe.index.names = ['Date']
+        dataframe = dataframe.reset_index()
+        dataframe['Date'] = dataframe['Date'].dt.date
+        dataframe.set_index('Date', inplace=True)
         dataframe = dataframe[['Open', 'High', 'Low', 'Close', 'Volume']]
         return dataframe
+
 class CSVHandler:
     def dataframeToCSV(self, name, dataframe):
         path = name + '.csv'
         dataframe.to_csv(path)
+
     def CSVToDataframe(self, name):
         path = name + '.csv'
         return pd.read_csv(path,
                            header=0,
                            index_col='Date',
                            parse_dates=True)
+
 MIN = 100
 MAX = 200
 PERIOD = 252
@@ -961,7 +959,16 @@ class TradingSimulator:
         if ai:
             tradingStrategy = TDQN(observationSpace, actionSpace)
         else:
-            tradingStrategy = tradingStrategy()
+            if strategyName == 'Buy and Hold':
+                tradingStrategy = BuyAndHold()
+            elif strategyName == 'Sell and Hold':
+                tradingStrategy = SellAndHold()
+            elif strategyName == 'Trend Following Moving Averages':
+                tradingStrategy = MovingAveragesTF()
+            elif strategyName == 'Mean Reversion Moving Averages' :
+                tradingStrategy = MovingAveragesMR()
+            else:
+                raise SystemError(strategyName)
         trainingEnv = tradingStrategy.training(trainingEnv, trainingParameters=trainingParameters,
                                                verbose=verbose, rendering=rendering,
                                                plotTraining=plotTraining, showPerformance=showPerformance)
@@ -1067,7 +1074,7 @@ class TradingSimulator:
             try:
                 _, _, testingEnv = self.simulateExistingStrategy(strategy, stockName, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, rendering, showPerformance)
             except SystemError:
-                _, _, testingEnv = self.simulateNewStrategy(strategy, stockName, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy)
+                _, _, testingEnv = self.simulateNewStrategy(strategy, stockName, startingDate, endingDate, splitingDate, observationSpace, actionSpace, money, stateLength, transactionCosts, bounds, step, numberOfEpisodes, verbose, plotTraining, rendering, showPerformance, saveStrategy=saveStrategy)
             analyser = PerformanceEstimator(testingEnv.data)
             performance = analyser.computePerformance()
             headers.append(strategy)
@@ -1076,33 +1083,7 @@ class TradingSimulator:
         tabulation = tabulate(performanceTable, headers, tablefmt="fancy_grid", stralign="center")
         logging.info('\n' + tabulation)
         return performanceTable
-import random
-import datetime
-from collections import deque
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.autograd as autograd
-import torch.nn.functional as F
-from torch.utils.tensorboard import SummaryWriter
-gamma = 0.4
-learningRate = 0.0001
-targetNetworkUpdate = 1000
-learningUpdatePeriod = 1
-capacity = 100000
-batchSize = 32
-experiencesRequired = 1000
-numberOfNeurons = 512
-dropout = 0.2
-epsilonStart = 1.0
-epsilonEnd = 0.01
-epsilonDecay = 10000
-alpha = 0.1
-filterOrder = 5
-gradientClipping = 1
-rewardClipping = 1
-L2Factor = 0.000001
-GPUNumber = 0
+
 class ReplayMemory:
     def __init__(self, capacity=capacity):
         self.memory = deque(maxlen=capacity)
