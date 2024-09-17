@@ -70,17 +70,14 @@ fictives = {
     'Triangle' : 'TRIANGLE',
 }
 stocks = {
-    'Dow Jones' : 'DIA',
     'S&P 500' : 'SPY',
     'NASDAQ 100' : 'QQQ',
     'FTSE 100' : 'EZU',
     'Nikkei 225' : 'EWJ',
     'Google' : 'GOOGL',
     'Apple' : 'AAPL',
-    'Facebook' : 'FB',
     'Amazon' : 'AMZN',
     'Microsoft' : 'MSFT',
-    'Twitter' : 'TWTR',
     'Nokia' : 'NOK',
     'Philips' : 'PHIA.AS',
     'Siemens' : 'SIE.DE',
@@ -92,8 +89,6 @@ stocks = {
     'HSBC' : 'HSBC',
     'CCB' : '0939.HK',
     'ExxonMobil' : 'XOM',
-    'Shell' : 'RDSA.AS',
-    'PetroChina' : 'PTR',
     'Tesla' : 'TSLA',
     'TeslaAug' : 'TSLA_aug',
     'Volkswagen' : 'VOW3.DE',
@@ -103,7 +98,6 @@ stocks = {
     'Kirin' : '2503.T'
 }
 indices = {
-    'Dow Jones' : 'DIA',
     'S&P 500' : 'SPY',
     'NASDAQ 100' : 'QQQ',
     'FTSE 100' : 'EZU',
@@ -112,10 +106,8 @@ indices = {
 companies = {
     'Google' : 'GOOGL',
     'Apple' : 'AAPL',
-    'Facebook' : 'FB',
     'Amazon' : 'AMZN',
     'Microsoft' : 'MSFT',
-    'Twitter' : 'TWTR',
     'Nokia' : 'NOK',
     'Philips' : 'PHIA.AS',
     'Siemens' : 'SIE.DE',
@@ -127,8 +119,6 @@ companies = {
     'HSBC' : 'HSBC',
     'CCB' : '0939.HK',
     'ExxonMobil' : 'XOM',
-    'Shell' : 'RDSA.AS',
-    'PetroChina' : 'PTR',
     'Tesla' : 'TSLA',
     'TeslaAug' : 'TSLA_aug',
     'Volkswagen' : 'VOW3.DE',
