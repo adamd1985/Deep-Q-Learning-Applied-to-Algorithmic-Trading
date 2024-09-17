@@ -739,9 +739,11 @@ class TradingEnv(gym.Env):
         else:
             self.reward = (self.data['Close'][t-1] - self.data['Close'][t])/self.data['Close'][t-1]
         self.t = self.t + 1
-        self.state = [self.data[feature][self.t - self.stateLength : self.t].tolist() for feature in self.features] + [[self.data['Position'][self.t - 1]]]
+
+        self.state = [self.data[feature].iloc[self.t - self.stateLength : self.t].tolist() for feature in self.features] + [[self.data['Position'][self.t - 1]]]
         if(self.t == self.data.shape[0]):
             self.done = 1
+
         otherAction = int(not bool(action))
         customReward = False
         if(otherAction == 1):
@@ -964,7 +966,7 @@ class TradingSimulator:
         testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, features=features)
         testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance, features=features)
         if rendering:
-            self.plotEntireTrading(trainingEnv, testingEnv)
+            self.plotEntireTrading(trainingEnv, testingEnv, splitingDate)
         if(saveStrategy):
             fileName = "".join([strategies_dir, strategy, "_", stock, "_", startingDate, "_", splitingDate])
             if ai:
@@ -1026,7 +1028,7 @@ class TradingSimulator:
         trainingEnv = tradingStrategy.testing(trainingEnv, trainingEnv, rendering=rendering, showPerformance=showPerformance)
         testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance)
         if rendering:
-            self.plotEntireTrading(trainingEnv, testingEnv)
+            self.plotEntireTrading(trainingEnv, testingEnv, splitingDate)
         return tradingStrategy, trainingEnv, testingEnv
 
 
@@ -1087,6 +1089,7 @@ class TDQN:
         self.replayMemory = ReplayMemory(capacity)
         self.observationSpace = observationSpace
         self.actionSpace = actionSpace
+
         self.policyNetwork = DQN(observationSpace, actionSpace, numberOfNeurons, dropout).to(self.device)
         self.targetNetwork = DQN(observationSpace, actionSpace, numberOfNeurons, dropout).to(self.device)
         self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
@@ -1120,6 +1123,7 @@ class TDQN:
         lowPrices = [state[1][i] for i in range(len(state[1]))]
         highPrices = [state[2][i] for i in range(len(state[2]))]
         volumes = [state[3][i] for i in range(len(state[3]))]
+
         returns = [(closePrices[i]-closePrices[i-1])/closePrices[i-1] for i in range(1, len(closePrices))]
         if coefficients[0][0] != coefficients[0][1]:
             state[0] = [((x - coefficients[0][0])/(coefficients[0][1] - coefficients[0][0])) for x in returns]
@@ -1147,7 +1151,12 @@ class TDQN:
             state[3] = [((x - coefficients[3][0])/(coefficients[3][1] - coefficients[3][0])) for x in volumes]
         else:
             state[3] = [0 for x in volumes]
+
+        open = [state[4][i] for i in range(len(state[4]))]
+        open = [abs(open[i]-open[i-1]) for i in range(1, len(open))]
+        state[4] = [x for x in open]
         state = [item for sublist in state for item in sublist]
+
         return state
     def processReward(self, reward):
         return np.clip(reward, -rewardClipping, rewardClipping)
