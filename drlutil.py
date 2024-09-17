@@ -1472,8 +1472,9 @@ class PerformanceEstimator:
     def computeAnnualizedReturn(self):
         cumulativeReturn = self.data['Returns'].cumsum()
         cumulativeReturn = cumulativeReturn[-1]
-        start = self.data.index[0].to_pydatetime()
-        end = self.data.index[-1].to_pydatetime()
+        # Set time component to midnight with min.
+        start = datetime.combine(self.data.index[0], datetime.min.time())
+        end = datetime.combine(self.data.index[-1], datetime.min.time())
         timeElapsed = end - start
         timeElapsed = timeElapsed.days
         if(cumulativeReturn > -1):
