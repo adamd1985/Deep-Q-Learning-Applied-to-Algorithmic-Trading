@@ -95,6 +95,7 @@ stocks = {
     'Shell' : 'RDSA.AS',
     'PetroChina' : 'PTR',
     'Tesla' : 'TSLA',
+    'TeslaAug' : 'TSLA_aug',
     'Volkswagen' : 'VOW3.DE',
     'Toyota' : '7203.T',
     'Coca Cola' : 'KO',
@@ -129,6 +130,7 @@ companies = {
     'Shell' : 'RDSA.AS',
     'PetroChina' : 'PTR',
     'Tesla' : 'TSLA',
+    'TeslaAug' : 'TSLA_aug',
     'Volkswagen' : 'VOW3.DE',
     'Toyota' : '7203.T',
     'Coca Cola' : 'KO',
@@ -1164,8 +1166,7 @@ class TDQN:
         # [CLOSE, LOW, HIGH, VOLUME], xxx, [POSITION]
         # Where xxx are additional features we use.
         if len(state)-1 > 4:
-            print(len(state))
-            for idx in range(4, len(state)):
+            for idx in range(4, len(state) - 1):
                 current_state = [state[idx][i] for i in range(len(state[idx]))]
                 current_state = [current_state[i] for i in range(1, len(current_state))]
                 state[idx] = [x for x in current_state]
