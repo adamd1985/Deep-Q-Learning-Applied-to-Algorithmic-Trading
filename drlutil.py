@@ -300,7 +300,7 @@ class MovingAveragesTF(tradingStrategy):
             analyser = PerformanceEstimator(testingEnv.data,)
             analyser.displayPerformance('MATF')
         return testingEnv
-    def plotTraining(self, results, bounds, step, marketSymbol):
+    def plotTraining(self, results, bounds, step, marketSymbol, savePlots=False):
         x = range(bounds[0], bounds[1], step)
         y = range(bounds[0], bounds[1], step)
         xx, yy = np.meshgrid(x, y, sparse=True)
@@ -311,7 +311,8 @@ class MovingAveragesTF(tradingStrategy):
         ax.set_zlabel('Sharpe Ratio')
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization3D', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization3D', '.png']))
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111,
                              ylabel='Short Window Duration',
@@ -321,7 +322,8 @@ class MovingAveragesTF(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization2D', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_MATFOptimization2D', '.png']))
 class MovingAveragesMR(tradingStrategy):
     def __init__(self, parameters=[5, 10]):
         self.parameters = parameters
@@ -390,7 +392,7 @@ class MovingAveragesMR(tradingStrategy):
             analyser = PerformanceEstimator(trainingEnv.data)
             analyser.displayPerformance('MAMR')
         return trainingEnv
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False, savePlots=False):
         testingEnv.reset()
         done = 0
         while done == 0:
@@ -401,7 +403,7 @@ class MovingAveragesMR(tradingStrategy):
             analyser = PerformanceEstimator(testingEnv.data)
             analyser.displayPerformance('MAMR')
         return testingEnv
-    def plotTraining(self, results, bounds, step, marketSymbol):
+    def plotTraining(self, results, bounds, step, marketSymbol, savePlots=False):
         x = range(bounds[0], bounds[1], step)
         y = range(bounds[0], bounds[1], step)
         xx, yy = np.meshgrid(x, y, sparse=True)
@@ -412,7 +414,8 @@ class MovingAveragesMR(tradingStrategy):
         ax.set_zlabel('Sharpe Ratio')
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization3D', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization3D', '.png']))
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111,
                              ylabel='Short Window Duration',
@@ -422,7 +425,8 @@ class MovingAveragesMR(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization2D', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_MAMROptimization2D', '.png']))
 class TimeSeriesAnalyser:
     def __init__(self, timeSeries):
         self.timeSeries = timeSeries
@@ -791,7 +795,7 @@ class TradingEnv(gym.Env):
         self.info = {'State' : otherState, 'Reward' : otherReward, 'Done' : self.done}
         return self.state, self.reward, self.done, self.info
 
-    def render(self):
+    def render(self, savePlots=False):
         fig = plt.figure(figsize=(10, 8))
         ax1 = fig.add_subplot(211, ylabel='Price', xlabel='Time')
         ax2 = fig.add_subplot(212, ylabel='Capital', xlabel='Time', sharex=ax1)
@@ -811,7 +815,8 @@ class TradingEnv(gym.Env):
                  'v', markersize=5, color='red')
         ax1.legend(["Price", "Long",  "Short"])
         ax2.legend(["Capital", "Long", "Short"])
-        plt.savefig(''.join(['images/', str(self.marketSymbol), '_Rendering', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(self.marketSymbol), '_Rendering', '.png']))
 
     def setStartingPoint(self, startingPoint):
         self.t = np.clip(startingPoint, self.stateLength, len(self.data.index))
@@ -872,7 +877,7 @@ class TradingSimulator:
         analyser.stationarityAnalysis()
         analyser.cyclicityAnalysis()
 
-    def plotEntireTrading(self, trainingEnv, testingEnv, splitingDate):
+    def plotEntireTrading(self, trainingEnv, testingEnv, splitingDate, savePlots=False):
         ratio = trainingEnv.data['Money'][-1]/testingEnv.data['Money'][0]
         testingEnv.data['Money'] = ratio * testingEnv.data['Money']
         dataframes = [trainingEnv.data, testingEnv.data]
@@ -900,7 +905,8 @@ class TradingSimulator:
         ax2.axvline(pd.to_datetime(splitingDate), color='black', linewidth=2.0)
         ax1.legend(["Price", "Long",  "Short", "Train/Test separation"])
         ax2.legend(["Capital", "Long", "Short", "Train/Test separation"])
-        plt.savefig(''.join(['images/', str(trainingEnv.marketSymbol), '_TrainingTestingRendering', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(trainingEnv.marketSymbol), '_TrainingTestingRendering', '.png']))
 
     def simulateNewStrategy(self, strategyName, stockName,
                             startingDate, endingDate, splitingDate,
@@ -909,6 +915,7 @@ class TradingSimulator:
                             bounds, step, numberOfEpisodes,
                             verbose=True, plotTraining=True, rendering=True, showPerformance=True,
                             saveStrategy=False,
+                            savePlots=False,
                             data_dir='./data/',
                             strategies_dir='./models/',
                             features=['High', 'Low', 'Open', 'Close']):
@@ -966,7 +973,7 @@ class TradingSimulator:
         testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, features=features)
         testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, rendering=rendering, showPerformance=showPerformance, features=features)
         if rendering:
-            self.plotEntireTrading(trainingEnv, testingEnv, splitingDate)
+            self.plotEntireTrading(trainingEnv, testingEnv, splitingDate,savePlots=savePlots)
         if(saveStrategy):
             fileName = "".join([strategies_dir, strategy, "_", stock, "_", startingDate, "_", splitingDate])
             if ai:
@@ -1152,9 +1159,17 @@ class TDQN:
         else:
             state[3] = [0 for x in volumes]
 
-        open = [state[4][i] for i in range(len(state[4]))]
-        open = [abs(open[i]-open[i-1]) for i in range(1, len(open))]
-        state[4] = [x for x in open]
+        # The last feature is always the position.
+        # By default they have 4 features and position:
+        # [CLOSE, LOW, HIGH, VOLUME], xxx, [POSITION]
+        # Where xxx are additional features we use.
+        if len(state)-1 > 4:
+            print(len(state))
+            for idx in range(4, len(state)):
+                current_state = [state[idx][i] for i in range(len(state[idx]))]
+                current_state = [abs(current_state[i] - current_state[i-1]) for i in range(1, len(current_state))]
+                state[idx] = [x for x in current_state]
+
         state = [item for sublist in state for item in sublist]
 
         return state
@@ -1209,7 +1224,7 @@ class TDQN:
             self.updateTargetNetwork()
             self.policyNetwork.eval()
     def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
+                 verbose=False, rendering=False, savePlots=False, plotTraining=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
         if plotTraining:
@@ -1286,7 +1301,8 @@ class TDQN:
             ax.plot(performanceTrain)
             ax.plot(performanceTest)
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', '.png']))
+            if savePlots:
+                plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', '.png']))
             for i in range(len(trainingEnvList)):
                 self.plotTraining(score[i][:episode], marketSymbol)
         if showPerformance:
@@ -1294,7 +1310,7 @@ class TDQN:
             analyser.displayPerformance('TDQN')
         self.writer.close()
         return trainingEnv
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
+    def testing(self, trainingEnv, testingEnv, rendering=False, savePlots=False, showPerformance=False, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         testingEnvSmoothed = dataAugmentation.lowPassFilter(testingEnv, filterOrder)
         trainingEnv = dataAugmentation.lowPassFilter(trainingEnv, filterOrder)
@@ -1318,19 +1334,21 @@ class TDQN:
             analyser = PerformanceEstimator(testingEnv.data)
             analyser.displayPerformance('TDQN')
         return testingEnv
-    def plotTraining(self, score, marketSymbol):
+    def plotTraining(self, score, marketSymbol, savePlots=False):
         fig = plt.figure()
         ax1 = fig.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
         ax1.plot(score)
-        plt.savefig(''.join(['images/', str(marketSymbol), 'TrainingResults', '.png']))
-    def plotQValues(self, QValues0, QValues1, marketSymbol):
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), 'TrainingResults', '.png']))
+    def plotQValues(self, QValues0, QValues1, marketSymbol, savePlots=False):
         fig = plt.figure()
         ax1 = fig.add_subplot(111, ylabel='Q values', xlabel='Time')
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        plt.savefig(''.join(['images/', str(marketSymbol), '_QValues', '.png']))
-    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, features=['Open', 'High', 'Low', 'Close']):
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_QValues', '.png']))
+    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, savePlots = False, features=['Open', 'High', 'Low', 'Close']):
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
         initialWeights =  copy.deepcopy(self.policyNetwork.state_dict())
@@ -1416,7 +1434,8 @@ class TDQN:
             ax.plot([performanceTrain[e][i] for e in range(trainingParameters[0])])
             ax.plot([performanceTest[e][i] for e in range(trainingParameters[0])])
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', str(i+1), '.png']))
+            if savePlots:
+                plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingPerformance', str(i+1), '.png']))
         fig = plt.figure()
         ax = fig.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
         ax.plot(expectedPerformanceTrain)
@@ -1424,7 +1443,8 @@ class TDQN:
         ax.fill_between(range(len(expectedPerformanceTrain)), expectedPerformanceTrain-stdPerformanceTrain, expectedPerformanceTrain+stdPerformanceTrain, alpha=0.25)
         ax.fill_between(range(len(expectedPerformanceTest)), expectedPerformanceTest-stdPerformanceTest, expectedPerformanceTest+stdPerformanceTest, alpha=0.25)
         ax.legend(["Training", "Testing"])
-        plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingExpectedPerformance', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', str(marketSymbol), '_TrainingTestingExpectedPerformance', '.png']))
         self.writer.close()
         return trainingEnv
     def saveModel(self, fileName):
@@ -1432,7 +1452,7 @@ class TDQN:
     def loadModel(self, fileName):
         self.policyNetwork.load_state_dict(torch.load(fileName, map_location=self.device))
         self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
-    def plotEpsilonAnnealing(self):
+    def plotEpsilonAnnealing(self, savePlots=False):
         plt.figure()
         plt.plot([self.epsilonValue(i) for i in range(10*epsilonDecay)])
         plt.title("Plot Title")
@@ -1440,7 +1460,8 @@ class TDQN:
         plt.ylabel("Y-axis")
         plt.xlabel("Iterations")
         plt.ylabel("Epsilon value")
-        plt.savefig(''.join(['images/', 'EpsilonAnnealing', '.png']))
+        if savePlots:
+            plt.savefig(''.join(['images/', 'EpsilonAnnealing', '.png']))
 
 class PerformanceEstimator:
     def __init__(self, tradingData):
@@ -1480,7 +1501,7 @@ class PerformanceEstimator:
         else:
             self.sortinoRatio = 0
         return self.sortinoRatio
-    def computeMaxDrawdown(self, plotting=False):
+    def computeMaxDrawdown(self, plotting=False, savePlots=False):
         capital = self.data['Money'].values
         through = np.argmax(np.maximum.accumulate(capital) - capital)
         if through != 0:
@@ -1501,7 +1522,8 @@ class PerformanceEstimator:
                      [capital[peak], capital[through]], 'o', color='Red', markersize=5)
             plt.xlabel('Time')
             plt.ylabel('Price')
-            plt.savefig(''.join(['images/', 'MaximumDrawDown', '.png']))
+            if savePlots:
+                plt.savefig(''.join(['images/', 'MaximumDrawDown', '.png']))
         return self.maxDD, self.maxDDD
     def computeProfitability(self):
         good = 0
