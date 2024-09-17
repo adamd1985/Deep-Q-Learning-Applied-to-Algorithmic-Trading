@@ -1473,8 +1473,8 @@ class PerformanceEstimator:
         cumulativeReturn = self.data['Returns'].cumsum()
         cumulativeReturn = cumulativeReturn[-1]
         # Set time component to midnight with min.
-        start = datetime.combine(self.data.index[0], datetime.min.time())
-        end = datetime.combine(self.data.index[-1], datetime.min.time())
+        start = pd.to_datetime(self.data.index[0])
+        end = pd.to_datetime(self.data.index[-1])
         timeElapsed = end - start
         timeElapsed = timeElapsed.days
         if(cumulativeReturn > -1):
