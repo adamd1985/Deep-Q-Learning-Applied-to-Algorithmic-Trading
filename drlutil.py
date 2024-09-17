@@ -1167,7 +1167,7 @@ class TDQN:
             print(len(state))
             for idx in range(4, len(state)):
                 current_state = [state[idx][i] for i in range(len(state[idx]))]
-                current_state = [abs(current_state[i] - current_state[i-1]) for i in range(1, len(current_state))]
+                current_state = [current_state[i] for i in range(1, len(current_state))]
                 state[idx] = [x for x in current_state]
 
         state = [item for sublist in state for item in sublist]
