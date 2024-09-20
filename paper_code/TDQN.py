@@ -30,7 +30,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 from tradingPerformance import PerformanceEstimator
-from dataAugmentation import DataAugmentation
+from paper_code.dataAugmentation import DataAugmentation
 from tradingEnv import TradingEnv
 
 

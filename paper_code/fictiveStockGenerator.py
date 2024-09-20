@@ -13,7 +13,7 @@ Institution: University of Liège
 import numpy as np
 import pandas as pd
 from scipy import signal
-from dataDownloader import YahooFinance
+from paper_code.dataDownloader import YahooFinance
 
 
 
@@ -36,9 +36,9 @@ class StockGenerator:
     """
     GOAL: Generation of some fictive stock market curves
           (linear, sinusoidal, triangle, etc.).
-        
+
     VARIABLES: /
-          
+
     METHODS: - linearUp: Generate a continuously increasing linear curve.
              - linearDown: Generate a continuously decreasing linear curve.
              - sinusoidal: Generate a (periodic) sinusoidal signal curve.
@@ -49,12 +49,12 @@ class StockGenerator:
         """
         GOAL: Generate a new fictive stock market as a continuously increasing
               linear curve.
-        
-        INPUTS: - startingDate: Beginning of the trading horizon.  
+
+        INPUTS: - startingDate: Beginning of the trading horizon.
                 - endingDate: Ending of the trading horizon.
-                - minValue: Minimum price value.   
-                - maxValue: Maximum price value.    
-        
+                - minValue: Minimum price value.
+                - maxValue: Maximum price value.
+
         OUTPUTS: - linearUpward: Generated fictive stock market dataframe.
         """
 
@@ -69,24 +69,24 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         linearUpward['Open'] = prices
-        linearUpward['High'] = prices 
+        linearUpward['High'] = prices
         linearUpward['Low'] = prices
-        linearUpward['Close'] = prices 
+        linearUpward['Close'] = prices
         linearUpward['Volume'] = 100000
 
         return linearUpward
 
-    
+
     def linearDown (self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
         """
         GOAL: Generate a new fictive stock market as a continuously decreasing
               linear curve.
-        
-        INPUTS: - startingDate: Beginning of the trading horizon.  
+
+        INPUTS: - startingDate: Beginning of the trading horizon.
                 - endingDate: Ending of the trading horizon.
-                - minValue: Minimum price value.   
-                - maxValue: Maximum price value.    
-        
+                - minValue: Minimum price value.
+                - maxValue: Maximum price value.
+
         OUTPUTS: - linearDownward: Generated fictive stock market dataframe.
         """
 
@@ -102,24 +102,24 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         linearDownward['Open'] = prices
-        linearDownward['High'] = prices 
+        linearDownward['High'] = prices
         linearDownward['Low'] = prices
-        linearDownward['Close'] = prices 
+        linearDownward['Close'] = prices
         linearDownward['Volume'] = 100000
 
         return linearDownward
 
-    
+
     def sinusoidal(self, startingDate, endingDate, minValue=MIN, maxValue=MAX, period=PERIOD):
         """
         GOAL: Generate a new fictive stock market as a sinusoidal signal curve.
-        
-        INPUTS: - startingDate: Beginning of the trading horizon.  
+
+        INPUTS: - startingDate: Beginning of the trading horizon.
                 - endingDate: Ending of the trading horizon.
-                - minValue: Minimum price value.   
-                - maxValue: Maximum price value.  
-                - period: Period of the sinusoidal signal.  
-        
+                - minValue: Minimum price value.
+                - maxValue: Maximum price value.
+                - period: Period of the sinusoidal signal.
+
         OUTPUTS: - sinusoidal: Generated fictive stock market dataframe.
         """
 
@@ -135,24 +135,24 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         sinusoidal['Open'] = prices
-        sinusoidal['High'] = prices 
+        sinusoidal['High'] = prices
         sinusoidal['Low'] = prices
-        sinusoidal['Close'] = prices 
+        sinusoidal['Close'] = prices
         sinusoidal['Volume'] = 100000
 
         return sinusoidal
 
-    
+
     def triangle(self, startingDate, endingDate, minValue=MIN, maxValue=MAX, period=PERIOD):
         """
         GOAL: Generate a new fictive stock market as a triangle signal curve.
-        
-        INPUTS: - startingDate: Beginning of the trading horizon.  
+
+        INPUTS: - startingDate: Beginning of the trading horizon.
                 - endingDate: Ending of the trading horizon.
-                - minValue: Minimum price value.   
-                - maxValue: Maximum price value.  
-                - period: Period of the triangle signal.  
-        
+                - minValue: Minimum price value.
+                - maxValue: Maximum price value.
+                - period: Period of the triangle signal.
+
         OUTPUTS: - triangle: Generated fictive stock market dataframe.
         """
 
@@ -168,10 +168,9 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         triangle['Open'] = prices
-        triangle['High'] = prices 
+        triangle['High'] = prices
         triangle['Low'] = prices
-        triangle['Close'] = prices 
+        triangle['Close'] = prices
         triangle['Volume'] = 100000
 
         return triangle
-        

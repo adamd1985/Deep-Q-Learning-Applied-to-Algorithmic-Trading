@@ -20,10 +20,10 @@ pd.options.mode.chained_assignment = None
 
 from matplotlib import pyplot as plt
 
-from dataDownloader import AlphaVantage
-from dataDownloader import YahooFinance
-from dataDownloader import CSVHandler
-from fictiveStockGenerator import StockGenerator
+from paper_code.dataDownloader import AlphaVantage
+from paper_code.dataDownloader import YahooFinance
+from paper_code.dataDownloader import CSVHandler
+from paper_code.fictiveStockGenerator import StockGenerator
 
 
 
