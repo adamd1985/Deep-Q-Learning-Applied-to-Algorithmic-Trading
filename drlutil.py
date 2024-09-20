@@ -1323,7 +1323,7 @@ class TDQN:
             self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance('TDQN')
+            analyser.displayPerformance('TDQN Testing')
         return testingEnv
     def plotTraining(self, score, marketSymbol, savePlots=False):
         fig = plt.figure()
@@ -1578,6 +1578,41 @@ class PerformanceEstimator:
                                  ["Ratio Average Profit/Loss", "{0:.3f}".format(self.averageProfitLossRatio)],
                                  ["Skewness", "{0:.3f}".format(self.skewness)]]
         return self.performanceTable
+    def getComputedPerformance(self):
+        self.computePnL()
+        self.computeAnnualizedReturn()
+        self.computeAnnualizedVolatility()
+        self.computeProfitability()
+        self.computeSharpeRatio()
+        self.computeSortinoRatio()
+        self.computeMaxDrawdown()
+        self.computeSkewness()
+
+        data = {
+            'Metric': ["PnL",
+                    "Annualized Return",
+                    "Annualized Volatility",
+                    "Sharpe Ratio",
+                    "Sortino Ratio",
+                    "Max Drawdown",
+                    "Max Drawdown Duration (days)",
+                    "Profitability",
+                    "Avg Profit/Loss Ratio",
+                    "Skewness"],
+            'Value': [self.PnL,
+                    self.annualizedReturn / 100,  # if expressed in %
+                    self.annualizedVolatily / 100,  # if expressed in %
+                    self.sharpeRatio,
+                    self.sortinoRatio,
+                    self.maxDD / 100,  # if expressed in %
+                    self.maxDDD,
+                    self.profitability / 100,  # if expressed in %
+                    self.averageProfitLossRatio,
+                    self.skewness]
+        }
+
+        return pd.DataFrame(data)
+
     def displayPerformance(self, name):
         self.computePerformance()
         headers = ["Performance Indicator", name]
