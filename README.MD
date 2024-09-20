@@ -5,7 +5,7 @@ The study is a replication and enhancement of the DQN by Theate, Thibaut and Ern
 
 # Dataset
 
-The Data is provided by me in the [data directory](./data)
+The data is provided by me in the [data directory](./data)
 
 # GPU and Linux
 

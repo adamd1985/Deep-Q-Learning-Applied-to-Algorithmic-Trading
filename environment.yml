@@ -1,4 +1,4 @@
-name: drl
+name: drl_aug
 channels:
   - scikit-learn
   - conda-forge
@@ -238,4 +238,4 @@ dependencies:
       - webencodings==0.5.1
       - yarg==0.1.9
       - yfinance==0.2.43
-prefix: /home/adamd1985/anaconda3/envs/drl
+prefix: /home/adamd1985/anaconda3/envs/drl_aug
