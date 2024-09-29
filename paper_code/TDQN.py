@@ -627,7 +627,7 @@ class TDQN:
 
 
     def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+                 verbose=True, rendering=False, plotTraining=False, showPerformance=False):
         """
         GOAL: Train the RL trading agent by interacting with its trading environment.
 
@@ -675,7 +675,7 @@ class TDQN:
                 print("Training progression (hardware selected => " + str(self.device) + "):")
 
             # Training phase for the number of episodes specified as parameter
-            for episode in tqdm(range(trainingParameters[0]), disable=not(verbose)):
+            for episode in tqdm(range(trainingParameters[0]), disable=not(verbose), desc=f"Training.."):
 
                 # For each episode, train on the entire set of training environments
                 for i in range(len(trainingEnvList)):

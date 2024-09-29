@@ -11,7 +11,7 @@ Institution: University of Liège
 ###############################################################################
 
 import numpy as np
-
+import pandas as pd
 from tabulate import tabulate
 from matplotlib import pyplot as plt
 
@@ -341,3 +341,38 @@ class PerformanceEstimator:
         headers = ["Performance Indicator", name]
         tabulation = tabulate(self.performanceTable, headers, tablefmt="fancy_grid", stralign="center")
         print(tabulation)
+
+    def getComputedPerformance(self):
+            self.computePnL()
+            self.computeAnnualizedReturn()
+            self.computeAnnualizedVolatility()
+            self.computeProfitability()
+            self.computeSharpeRatio()
+            self.computeSortinoRatio()
+            self.computeMaxDrawdown()
+            self.computeSkewness()
+
+            data = {
+                'Metric': ["PnL",
+                        "Annualized Return",
+                        "Annualized Volatility",
+                        "Sharpe Ratio",
+                        "Sortino Ratio",
+                        "Max Drawdown",
+                        "Max Drawdown Duration (days)",
+                        "Profitability",
+                        "Avg Profit/Loss Ratio",
+                        "Skewness"],
+                'Value': [self.PnL,
+                        self.annualizedReturn / 100,  # if expressed in %
+                        self.annualizedVolatily / 100,  # if expressed in %
+                        self.sharpeRatio,
+                        self.sortinoRatio,
+                        self.maxDD / 100,  # if expressed in %
+                        self.maxDDD,
+                        self.profitability / 100,  # if expressed in %
+                        self.averageProfitLossRatio,
+                        self.skewness]
+            }
+
+            return pd.DataFrame(data)
