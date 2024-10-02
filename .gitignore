@@ -5,6 +5,8 @@ data/datashare.zip
 data/historic_characteristics.csv
 data/*.parquet
 data/*.pkl
+models/checkpoint
+models/learner
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
